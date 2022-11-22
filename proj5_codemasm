@@ -4,6 +4,7 @@ INCLUDE Irvine32.inc
 
 ; (insert constant definitions here)
     ARRAY_SIZE = 200
+    PER_LINE = 20
     LO_RANDOM = 15
     HI_RANDOM = 50
 
@@ -28,21 +29,4 @@ space           BYTE    " ", 0
 .code
 main PROC
 
-; introduction 
-    MOV     EDX, OFFSET programtitle
-    CALL    WriteString
-    CALL    CrLF
-    
-    MOV     EDX, OFFSET authorname
-    CALL    WriteString
-    CALL    CrLF
-    CALL    CrLF
-    
-    MOV     EDX, OFFSET introduction 
-    CALL    WriteString
-    CALL    CrLF
-    CALL    CrLF
-    
-    MOV     EDX, OFFSET unsorted
-    CALL    WriteString
-    
+
