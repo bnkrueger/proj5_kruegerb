@@ -8,265 +8,40 @@ INCLUDE Irvine32.inc
     HI_RANDOM = 50
 
 .data
-authorname      BYTE    "Author: Brianna 
+programtitle    BYTE    "Welcome to Generating, Sorting, and Counting Random integers!", 0
+authorname      BYTE    "Author: Brianna Krueger", 0 
 introduction    BYTE    "This program generates 200 random integers between 15 and 50, inclusive.
                          It then displays the original list, sorts the list, displays the median value of the list,
                          displays the list sorted in ascending order, and finally displays the number of instances
                          of each generated value, starting with the number of lowest.", 0
+unsorted        BYTE    "Your unsorted randomm numbers:", 0
+median          BYTE    "The median value of the array:", 0
+sorted          BYTE     "Your sorted random numbers:", 0
 
-space           BYTE    "   ", 0
-median          BYTE    "The median is: ", 0
-temp            DWORD   0
-list            DWORD   MAX_INPUT   DUP(?)
+instance        BYTE    "Your list of instances of each generated number, starting with the smallest value:", 0
+goodbye         BYTE    "Thanks for trying out the programm! Goodbye.", 0
+array           DWORD   200 DUP(?)
+countarray      DWORD   200 DUP(?)
+arraysize       DWORD   0
 
 .code
 main PROC
 
-; (insert executable instructions here)
-    call    randomize
-
-    push    OFFSET request ;passed by reference
-    call    getData
-
-    call    CrLf
-
-    push    request ; passed by value
-    push    OFFSET list ; passed by reference
-    call    fillArray
-
-    push    OFFSET list
-    push    request
-    push    OFFSET title_1
-    call    displaylist
-
-    push    OFFSET list
-    push    request
-    call    sortList
-
-    push    OFFSET list
-    push    request
-    call    displayMedian
-
-    call    CrLf
-    call    CrLf
-
-    push    OFFSET list
-    push    request
-    push    OFFSET title_2
-    call    displaylist
-
-    exit    ; exit to operating system
-main ENDP
-
-; (insert additional procedures here)
-getData PROC
-
-    push    ebp ;Set up stack frame
-    mov     ebp, esp
-
-    ;get an integer from user
-    mov     ebx, [ebp+8]    ;get address of request into ebx
-
-    L1:
-        mov     edx, OFFSET ask_user
-        call    WriteString
-        call    ReadDec
-
-        cmp     eax, MIN_INPUT
-        jl      errorMessage
-        cmp     eax, MAX_INPUT
-        jg      errorMessage
-
-        cmp     eax, MIN_INPUT
-        jge     endThis
-        cmp     eax, MAX_INPUT
-        jle     endThis
-
-    errorMessage:
-        mov     edx, OFFSET error
-        call    WriteString
-        call    CrLf
-        jmp     L1
-
-    endThis:
-        mov     [ebx], eax
-        pop     ebp
-        ret     4 ; remove four more bytes from the stack (after ret @)
-
-getData ENDP
-
-fillArray PROC
-;include parameters - request (value), array (reference)
-    ; MAJORITY OF THE FOLLOWING CODE WAS EXTRACTED FROM LECTURE 20 SLIDES
-    push    ebp
-    mov     ebp, esp ;[ebp+4]
-    mov     edi, [ebp+8] ; @list in edi
-    mov     ecx, [ebp+12] ; value of request in ecx
-
-    more:
-        mov     eax, HI_RANDOM
-        sub     eax, LO_RANDOM
-        inc     eax
-        call    RandomRange
-        add     eax, LO_RANDOM
-
-        mov     [edi], eax
-        add     edi, 4
-        loop    more
-
-    endmore:
-        pop     ebp
-        ret     8
-fillArray ENDP
-
-sortList PROC
-    push    ebp
-    mov     ebp, esp
-    mov     edi, [ebp+12]
-    mov     ecx, [ebp+8]
-
-    dec     ecx
-    mov     ebx, 0
-
-    firstLoop:
-        mov     eax, ebx
-        mov     edx, ebx
-        inc     edx
-        push    ecx
-        mov     ecx, [ebp+8]
-
-        secondLoop:
-            mov     esi, [edi + (edx * 4)]
-            cmp     esi, [edi + (eax * 4)]
-            jle     lesser
-            mov     eax, edx    
-        lesser:
-            inc     edx
-            loop    secondLoop
-
-        push    edx
-        push    esi
-        push    [edi + (ebx * 4)] ; array[k]
-        push    [edi + (eax * 4)] ; array[i]
-        call    exchangeElements
-        pop     [edi + (eax * 4)]
-        pop     [edi + (ebx * 4)]
-        pop     esi
-        pop     edx
-        pop     ecx ; set the 
-        inc     ebx ; increment k in the first loop
-        loop    firstLoop
-
-    pop     ebp
-    ret     8
-
-sortList ENDP
-
-exchangeElements PROC
-    push    ebp
-    mov     ebp, esp
-    mov     esi, [ebp+12] ; array[k]
-    mov     edx, [ebp+8] ; array[i]
-    mov     [ebp+8], esi
-    mov     [ebp+12], edx
-    pop     ebp
-    ret     
-exchangeElements ENDP
-
-displayMedian PROC
-    push    ebp
-    mov     ebp, esp ;[ebp+4]
-    mov     edi, [ebp+12] ; @list in edi
-    mov     ecx, [ebp+8] ; value of request in ecx
-
-    mov     eax, ecx
-    mov     ebx, 2
-    cdq
-    div     ebx
-    cmp     edx, 0
-    je      isEven
-    cmp     edx, 1
-    je      isOdd
-
-    ; https://github.com/TRMassey/CS271/blob/master/assignment5.asm
-    isEven:
-        ; find the higher number
-        mov     ebx, 4
-        mul     ebx
-        add     edi, eax
-        mov     edx, [edi]
-
-        ; find the lower number
-        mov     eax, edi
-        sub     eax, 4
-        mov     edi, eax
-        mov     eax, [edi]
-
-        ; add and divide them by 2
-        add     eax, edx
-        mov     edx, 0
-        mov     ebx, 2
-        cdq
-        div     ebx
-
-        ; print out the median value (rounded to the nearest int)
-        call    CrLf
-        call    CrLf
-        mov     edx, OFFSET median
-        call    WriteString
-        call    WriteDec
-        jmp     finish
-
-    isOdd:
-        mov     eax, [edi + (eax * 4)]
-        call    CrLf
-        call    CrLf
-        mov     edx, OFFSET median
-        call    WriteString
-        call    WriteDec
-        jmp     finish
-
-    finish:
-        pop ebp
-        ret
-displayMedian ENDP
-
-displayList PROC
-    push    ebp
-    mov     ebp, esp ; [ebp+4]
-    mov     ecx, [ebp+12] ; @request
-    mov     edi, [ebp+16] ; @list
-    mov     esi, 10
-
-    mov     edx, [ebp+8] ; @title
-    call    WriteString
-    call    CrLf
-
-    show:
-        mov     eax, [edi]
-        call    WriteDec
-        mov     edx, OFFSET space
-        call    WriteString
-        add     edi, 4
-
-        dec     esi
-        cmp     esi, 0
-        je      callClear
-
-    loopAgain:
-        loop    show
-
-    jmp     endshow
-
-    callClear:
-        mov     esi, 10
-        call    CrLf
-        jmp     loopAgain
-
-    endshow:
-        pop     ebp
-        ret     12
-
-displayList ENDP
-
-END main
+; introduction 
+    MOV     EDX, OFFSET programtitle
+    CALL    WriteString
+    CALL    CrLF
+    
+    MOV     EDX, OFFSET authorname
+    CALL    WriteString
+    CALL    CrLF
+    CALL    CrLF
+    
+    MOV     EDX, OFFSET introduction 
+    CALL    WriteString
+    CALL    CrLF
+    CALL    CrLF
+    
+    MOV     EDX, OFFSET unsorted
+    CALL    WriteString
+    
