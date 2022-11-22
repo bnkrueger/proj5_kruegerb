@@ -29,7 +29,7 @@ space           BYTE    " ", 0
 .code
 main PROC
 
-    ; CALL    Randomize ?
+    CALL    Randomize
     
     
     ; introduction 
@@ -48,18 +48,68 @@ main PROC
     
     ;unsorted list label
     PUSH    OFFSET unsorted
-    CALL    unsortLabel
+    CALL    Label
     CALL    CrLF
     
     ;unsorted list
     PUSH    OFFSET array
     PUSH    arraysize
     PUSH    OFFSET space
-    CALL    displayArray
+    CALL    displayList
     CALL    CrLF
     CALL    CrLF
     
+    ;sort the list
+    PUSH    OFFSET array
+    PUSH    arraysize
+    CALL    sortList
     
+    ;median label 
+    PUSH    OFFEST median
+    CALL    Label
+    
+    ;median value
+    PUSH    OFFSET array
+    PUSH    arraysize
+    CALL    displayMedian
+    CALL    CrLF
+    CALL    CrLF
+    
+    ;sorted array label
+    PUSH    OFFSET sorted
+    CALL    Label
+    CALL    CrLF
+    
+    ;sorted array
+    PUSH    OFFSET array
+    PUSH    arraysize
+    CALL    displayList
+    
+    ;count list label
+    PUSH    OFFSET instance
+    CALL    Label
+    CALL    CrLF
+    
+    ;count list store
+    PUSH     OFFSET array
+    PUSH     OFFSET countArray
+    PUSH    ARRAYSIZE
+    PUSH    OFFSET cArraySize
+    CALL    countList
+    
+    ;count list display
+    PUSH     OFFSET countArray
+    PUSH    cArraySize
+    PUSH    OFFSET spaces
+    CALL    displayArray ;display array call #3
+    CALL    CrLf
+    CALL    CrLf
+    
+    ;farewell 
+    PUSH    OFFSET goodbye
+    CALL    farewell
+    
+   
     exit
 main ENDP
 
@@ -106,7 +156,7 @@ fillArray PROC
     
 fillArray ENDP
  
-unsortLabel PROC
+Label PROC
     
     PUSH    EBP
     MOV     EBP, ESP
@@ -114,9 +164,109 @@ unsortLabel PROC
     MOV     EDX, [EBP + 8]
     CALL    WriteString
     
-unsortLabel ENDP
+Label ENDP
  
-displayArray PROC
+sortList PROC
+    PUSH    EBP
+    MOV     EBP, ESP
+    MOV     ECX, [EBP + 8]
+    MOV     ESI, [EBP + 12]
+    DEC     ECX
+    
+firstLoop: 
+    MOV     EAX, [ESI]
+    MOV     EDX, ESI
+    PUSH    ECX
+    
+secondLoop:
+    MOV     EBX, [ESI + 4]
+    MOV     EAX, [EDX]
+    CMP     EAX, EBX
+    JLE     noSwap
+    ADD     ESI, 4
+    PUSH    ESI
+    PUSH    EDX
+    PUSH    ECX
+    CALL    exchangeElements
+    SUB     ESI, 4
+    
+noSwap: 
+    ADD     ESI, 4
+    LOOP    secondLoop
+    
+    POP     ECX
+    MOV     ESI, EDX
+    
+    ADD     ESI, 4
+    LOOP    firstLoop
+    
+    POP     EBP
+    RET     8
+    
+sortList ENDP
+
+exchangeElements PROC
+    PUSH    EBP
+    MOV     EBP, ESP
+    MOV     EAX, [EBP + 16]
+    MOV     EBX, [EBP + 12]
+    
+    MOV     EDX, EAX
+    SUB     EDX, EBX
+    
+    MOV     ESI, EBX
+    MOV     ECX, [EBX]
+    MOV     EAX, [EAX]
+    
+    MOV     [ESI], EAX
+    ADD     ESI, EDX
+    MOV     [ESI], ECX
+    
+    POPAD
+    POP     EBP
+    RET     12
+    
+exchangeElements ENDP
+
+displayMedian PROC
+    PUSH    EBP
+    MOV     EBP, ESP
+    MOV     ESI, [EBP + 12]
+    
+    MOV     EDX, 0
+    MOV     EAX, [EBP + 8]
+    CDQ
+    IDIV    EBX
+    MOV     ECX, EAX
+    CMP     EDX, 0
+    JE      L2
+    MOV     ECX, EAX
+    SUB     ECX, 1
+    
+L1:
+    ADD     ESI, 4
+    LOOP    L1
+    MOV     EAX, [ESI]
+    JMP     next
+    
+L2:
+    ADD     ESI, 4
+    LOOP    L2
+    MOV     EAX, [ESI]
+    ADD     EAX, [ESI - 4]
+    MOV     EBX, 2
+    CDQ
+    IDIV    EBX
+    
+next:
+    CALL    WriteDec
+    
+    POP     EBP
+    RET     8
+
+displayMedian ENDP
+    
+displayList PROC
     PUSH    EBP
     MOV     EBP, ESP
     
@@ -154,8 +304,79 @@ nextvalue:
     POP     EBP
     RET     16
 
-displayArray ENDP
- 
-sortList PROC
- 
- 
+displayList ENDP
+
+countList   PROC
+    PUSH    EBP
+    MOV     EBP, ESP
+    MOV     ESI, [EBP + 20]
+    MOV     ECX, [EBP + 12]
+   
+countLoop:
+    MOV     EAX, 1
+continue:
+    MOV     EBX, [ESI]
+    CMP     EBX, [ESI + 4]
+    JNE     print
+    ADD     EAX, 1
+    ADD     ESI, 4
+    LOOP    continue
+    JMP     done
+    
+print:
+    PUSH    [EBP + 16]
+    PUSH    [EBP + 8]
+    PUSH    EAX
+    CALL    addto
+    
+    ADD     ESI, 4
+    LOOP    countloop
+    
+done: 
+    POP     EBP
+    RET     16
+    
+countList ENDP
+
+addto PROC
+    PUSH    EBP
+    MOV     EBP, ESP
+    MOV     ESI, [countarray]
+    MOV     EAX, 5
+    MOV     ECX, arraysize
+    
+    CMP     ECX, 0
+    JZ      done2
+    
+countLoop3:
+    ADD     ESI, 4
+    LOOp    countLoop3
+    
+done2:
+    MOV     [ESI], EAX
+    INC     arraysize
+    MOV     EAX, [ESI]
+    CALL    WriteDec
+    CALL    CrLF
+    
+    POP     EBP
+    RET     12
+    
+addto ENDP
+
+farewell    PROC
+    PUSH    EBP
+    MOV     EBP, ESP
+    
+    CALL    CrLF
+    CALL    CrLF
+    MOV     EDX, [EBP + 8]
+    CALL    WriteString
+    CALL    CrLF
+    CALL    CrLF
+    
+    POP     EBP
+    RET     8
+    
+farewell ENDP
+END main
