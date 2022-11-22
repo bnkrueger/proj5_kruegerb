@@ -29,4 +29,133 @@ space           BYTE    " ", 0
 .code
 main PROC
 
+    ; CALL    Randomize ?
+    
+    
+    ; introduction 
+    PUSH    OFFSET programtitle     ;16
+    PUSH    OFFSET authorname       ;12
+    PUSH    OFFSET introduction     ;8
+    CALL    introduction 
+    
+    ;fill array
+    PUSH    OFFSET array
+    PUSH    OFFSET arraysize
+    PUSH    HI_RANDOM
+    PUSH    LO_RANDOM
+    CALL    fillArray
+    CALL    CrLF
+    
+    ;unsorted list label
+    PUSH    OFFSET unsorted
+    CALL    unsortLabel
+    CALL    CrLF
+    
+    ;unsorted list
+    PUSH    OFFSET array
+    PUSH    arraysize
+    PUSH    OFFSET space
+    CALL    displayArray
+    CALL    CrLF
+    CALL    CrLF
+    
+    
+    exit
+main ENDP
 
+introduction PROC
+    PUSH    EBP
+    MOV     EBP, ESP
+    MOV     EDX, [EBP + 16]
+    CALL    WriteString
+    CALL    CrLF
+    
+    MOV     EDX, [EBP + 12]
+    MOV     WriteString
+    CALL    CrLF
+    
+    MOV     EDX, [EBP + 8]
+    CALL    WriteString
+    CALL    CrLF
+    CALL    CrLF
+    
+    POP     EBP
+    RET     8
+    
+introduction ENDP
+
+fillArray PROC
+    PUSH    EBP
+    MOV     EBP, ESP 
+    MOV     ESI, [EBP + 12] 
+    MOV     ECX, [EBP + 8]      ;array size... set loop counter
+    
+    fillvalues:
+    MOV     EAX, HI_RANDOM
+    SUB     EAX, LO_RANDOM
+    INC     EAX
+    CALL    RandomRange
+    ADD     EAX, LO_RANDOM
+    MOV     [ESI], EAX
+    
+    ADD     ESI, 4
+    LOOP    fillvalues
+    
+    POP     EBP
+    RET     4
+    
+fillArray ENDP
+ 
+unsortLabel PROC
+    
+    PUSH    EBP
+    MOV     EBP, ESP
+    
+    MOV     EDX, [EBP + 8]
+    CALL    WriteString
+    
+unsortLabel ENDP
+ 
+displayArray PROC
+    PUSH    EBP
+    MOV     EBP, ESP
+    
+    CALL    CrLF
+    MOV     EDX, [EBP + 8]
+    CALL    WrtieString
+    CALL    CrLF
+    
+    MOV     ESI, [EBP + 20]
+    MOV     ECX, [EBP + 16]
+    MOV     EDX, [EBP + 12] 
+    MOV     EBX, 0
+    
+Loop1:
+    
+    MOV     EAX, [ESI]
+    CALL    WriteDec
+    INC     EBX
+    
+    MOV     EDX, [EBP + 12]
+    CALL    WriteString
+    
+    ADD     ESI, 4
+    CMP     EBX, 20
+    JE      moveline
+    JMP     nextvalue 
+    
+moveline: 
+    MOV     EBX, 0
+    CALL    CrLF
+    
+nextvalue: 
+    LOOP    Loop1
+    
+    POP     EBP
+    RET     16
+
+displayArray ENDP
+ 
+sortList PROC
+ 
+ 
