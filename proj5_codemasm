@@ -23,6 +23,7 @@ goodbye         BYTE    "Thanks for trying out the programm! Goodbye.", 0
 array           DWORD   200 DUP(?)
 countarray      DWORD   200 DUP(?)
 arraysize       DWORD   0
+space           BYTE    " ", 0
 
 .code
 main PROC
